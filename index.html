@@ -90,7 +90,7 @@ img{border-radius:12px;}
 
 lucide.createIcons();
 
-const API_URL = "https://production-75739.up.railway.app"; // 🔥 FIX
+const API_URL = "https://web-production-75739.up.railway.app"; // 🔥 FIX
 
 const chat = document.getElementById("chat");
 const welcome = document.getElementById("welcome");
@@ -120,7 +120,7 @@ async function send(){
   append("user", val);
   input.value="";
 
-  append("ai","⏳ Mengetik...");
+  append("ai","⏳...");
 
   try{
     const res = await fetch(API_URL + "/chat",{
