@@ -23,10 +23,10 @@ Aturan:
 """
 
 # =========================
-# CONFIG
+# CONFIG (FIX FINAL)
 # =========================
 def get_model():
-    return "gemini-1.5-flash"  # ✅ FIX MODEL
+    return "models/gemini-pro"  # ✅ PALING STABIL
 
 def get_api_key():
     return os.getenv("GEMINI_API_KEY")
@@ -52,7 +52,7 @@ def debug():
 
 
 # =========================
-# LIST MODELS (OPTIONAL)
+# MODELS CHECK
 # =========================
 @app.route("/models")
 def models():
@@ -62,9 +62,7 @@ def models():
         return {"error": "API KEY belum diset"}
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models?key={API_KEY}"
-    res = requests.get(url)
-
-    return res.json()
+    return requests.get(url).json()
 
 
 # =========================
@@ -78,17 +76,14 @@ def chat():
         if not API_KEY:
             return jsonify({"reply": "❌ API KEY belum diset di Railway"})
 
-        data = request.get_json()
-
-        if not data:
-            return jsonify({"reply": "❌ Body harus JSON"})
+        data = request.get_json(force=True)
 
         user = data.get("message", "")
 
         if not user:
             return jsonify({"reply": "❌ Pesan kosong"})
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{get_model()}:generateContent?key={API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/{get_model()}:generateContent?key={API_KEY}"
 
         payload = {
             "contents": [
@@ -109,30 +104,21 @@ def chat():
         res = requests.post(url, json=payload, headers=headers)
         result = res.json()
 
-        # ===== ERROR HANDLE =====
+        # ERROR HANDLE
         if "error" in result:
-            return jsonify({
-                "reply": "❌ " + result["error"]["message"]
-            })
+            return jsonify({"reply": "❌ " + result["error"]["message"]})
 
         candidates = result.get("candidates")
 
         if not candidates:
-            return jsonify({"reply": "❌ Respon AI kosong"})
+            return jsonify({"reply": "❌ Respon kosong dari AI"})
 
-        parts = candidates[0]["content"]["parts"]
-
-        if not parts:
-            return jsonify({"reply": "❌ Tidak ada isi respon"})
-
-        reply = parts[0].get("text", "❌ Tidak ada teks")
+        reply = candidates[0]["content"]["parts"][0].get("text", "❌ Tidak ada teks")
 
         return jsonify({"reply": reply})
 
     except Exception as e:
-        return jsonify({
-            "reply": f"❌ Error server: {str(e)}"
-        })
+        return jsonify({"reply": f"❌ Error server: {str(e)}"})
 
 
 # =========================
@@ -144,17 +130,16 @@ def vision():
         API_KEY = get_api_key()
 
         if not API_KEY:
-            return jsonify({"reply": "❌ API KEY belum diset di Railway"})
+            return jsonify({"reply": "❌ API KEY belum diset"})
 
         file = request.files.get("file")
 
         if not file:
             return jsonify({"reply": "❌ Tidak ada file dikirim"})
 
-        img_bytes = file.read()
-        img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+        img_base64 = base64.b64encode(file.read()).decode("utf-8")
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{get_model()}:generateContent?key={API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/{get_model()}:generateContent?key={API_KEY}"
 
         payload = {
             "contents": [
@@ -182,19 +167,12 @@ def vision():
         if "error" in result:
             return jsonify({"reply": "❌ " + result["error"]["message"]})
 
-        candidates = result.get("candidates")
-
-        if not candidates:
-            return jsonify({"reply": "❌ Respon vision kosong"})
-
-        reply = candidates[0]["content"]["parts"][0]["text"]
+        reply = result["candidates"][0]["content"]["parts"][0]["text"]
 
         return jsonify({"reply": reply})
 
     except Exception as e:
-        return jsonify({
-            "reply": f"❌ Error vision: {str(e)}"
-        })
+        return jsonify({"reply": f"❌ Error vision: {str(e)}"})
 
 
 # =========================
