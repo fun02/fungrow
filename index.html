@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FunGrow AI Pro</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+body{
+  background:#0b0f1a;
+  color:white;
+  font-family:sans-serif;
+}
+
+/* glow */
+.glow {
+  box-shadow: 0 0 25px rgba(139,92,246,0.4);
+}
+
+/* glass */
+.glass{
+  backdrop-filter: blur(12px);
+  background: rgba(17,24,39,0.6);
+}
+
+/* card */
+.card{
+  background:#111827;
+  border-radius:16px;
+  padding:16px;
+  border:1px solid #1f2937;
+}
+
+/* chat */
+.msg-row{margin-bottom:14px;display:flex;}
+.user-row{justify-content:flex-end;}
+
+.bubble-user{
+  background:#1f2937;
+  padding:10px 14px;
+  border-radius:18px;
+  max-width:80%;
+}
+
+.bubble-ai{
+  background:#111827;
+  padding:10px;
+  border-radius:12px;
+  max-width:85%;
+}
+
+/* image */
+img{
+  border-radius:12px;
+  box-shadow:0 0 10px rgba(0,0,0,0.5);
+}
+
+/* input */
+.input-box{
+  border-radius:30px;
+  padding:8px 12px;
+  display:flex;
+  align-items:center;
+  border:1px solid #1f2937;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="flex justify-between p-4 items-center">
+  <i data-lucide="menu"></i>
+  <div class="flex gap-3">
+    <i data-lucide="mic" onclick="startMic()"></i>
+    <i data-lucide="sparkles"></i>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main" class="p-4 overflow-y-auto h-[75vh]">
+
+<!-- WELCOME -->
+<div id="welcome" class="text-center mt-10">
+
+  <div class="mx-auto w-20 h-20 rounded-2xl bg-purple-600 glow flex items-center justify-center">
+    ⚡
+  </div>
+
+  <h1 class="text-2xl font-bold mt-6">FunGrow AI</h1>
+  <p class="text-gray-400 mt-2">Asisten AI pintar</p>
+
+  <div class="grid grid-cols-2 gap-3 mt-6">
+
+    <button onclick="quick('Buat website modern')" class="card">🌐 Website</button>
+    <button onclick="quick('Jelaskan AI')" class="card">🧠 AI</button>
+    <button onclick="quick('Ide bisnis startup')" class="card">🚀 Startup</button>
+    <button onclick="quick('Belajar coding python')" class="card">🐍 Python</button>
+
+  </div>
+
+</div>
+
+<!-- CHAT -->
+<div id="chat" class="hidden mt-4"></div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="p-3 glass">
+
+<div class="input-box">
+
+  <!-- PLUS -->
+  <button onclick="openUpload()">
+    <i data-lucide="plus"></i>
+  </button>
+
+  <!-- INPUT -->
+  <input id="input"
+    class="flex-1 bg-transparent outline-none px-2"
+    placeholder="Tanya apa saja..."
+    onkeydown="if(event.key==='Enter') send()">
+
+  <!-- SEND -->
+  <button id="sendBtn" class="bg-purple-600 p-2 rounded-full">
+    <i data-lucide="send"></i>
+  </button>
+
+</div>
+
+</footer>
+
+<!-- FILE -->
+<input type="file" id="file-input" class="hidden">
+
+<!-- MODAL -->
+<div id="upload-modal" class="hidden fixed inset-0 bg-black/60 flex items-end justify-center">
+<div class="bg-[#111827] w-full p-6 rounded-t-2xl">
+
+<div class="grid grid-cols-3 gap-4 text-center">
+<button onclick="openCamera()">📷 Kamera</button>
+<button onclick="pickImage()">🖼️ Foto</button>
+<button onclick="pickFile()">📄 File</button>
+</div>
+
+<button onclick="closeUpload()" class="mt-5 w-full text-gray-400">Tutup</button>
+
+</div>
+</div>
+
+<script>
+
+try{
+
+lucide.createIcons();
+
+const chat = document.getElementById("chat");
+const welcome = document.getElementById("welcome");
+const input = document.getElementById("input");
+
+let history = [];
+
+document.getElementById("sendBtn").addEventListener("click", send);
+
+/* STREAM EFFECT */
+function typeEffect(text, bubble){
+  let i = 0;
+  function typing(){
+    if(i < text.length){
+      bubble.innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typing, 10);
+    }
+  }
+  typing();
+}
+
+/* SEND */
+async function send(){
+  const val = input.value.trim();
+  if(!val) return;
+
+  welcome.style.display="none";
+  chat.classList.remove("hidden");
+
+  append("user", val);
+  input.value="";
+
+  history.push({role:"user", text:val});
+
+  append("ai","⏳ Mengetik...");
+
+  try{
+    const res = await fetch("http://127.0.0.1:8000/chat",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({message:val, history:history})
+    });
+
+    const data = await res.json();
+
+    document.querySelectorAll(".bubble-ai").forEach(b=>{
+      if(b.innerText.includes("Mengetik")) b.remove();
+    });
+
+    const row = document.createElement("div");
+    row.className = "msg-row";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble-ai";
+
+    row.appendChild(bubble);
+    chat.appendChild(row);
+
+    typeEffect(data.reply, bubble);
+
+    history.push({role:"ai", text:data.reply});
+
+  }catch{
+    append("ai","❌ backend error");
+  }
+
+  scroll();
+}
+
+/* APPEND */
+function append(role,text,file=null){
+
+  const row = document.createElement("div");
+  row.className = "msg-row " + (role==="user"?"user-row":"");
+
+  const bubble = document.createElement("div");
+  bubble.className = role==="user"?"bubble-user":"bubble-ai";
+
+  if(file && file.type.startsWith("image/")){
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.style.maxWidth="200px";
+    bubble.appendChild(img);
+  } else {
+    bubble.innerHTML = role==="ai" ? marked.parse(text) : text;
+  }
+
+  row.appendChild(bubble);
+  chat.appendChild(row);
+
+  scroll();
+}
+
+/* SCROLL */
+function scroll(){
+  chat.scrollTo({top:chat.scrollHeight,behavior:"smooth"});
+}
+
+/* QUICK */
+function quick(t){
+  input.value = t;
+  send();
+}
+
+/* MIC */
+function startMic(){
+  const rec = new webkitSpeechRecognition();
+  rec.lang="id-ID";
+
+  rec.onresult = e => {
+    input.value = e.results[0][0].transcript;
+    send();
+  };
+
+  rec.start();
+}
+
+/* UPLOAD */
+function openUpload(){
+  document.getElementById("upload-modal").classList.remove("hidden");
+}
+function closeUpload(){
+  document.getElementById("upload-modal").classList.add("hidden");
+}
+function openCamera(){
+  const i=document.getElementById("file-input");
+  i.accept="image/*"; i.capture="environment"; i.click();
+}
+function pickImage(){
+  const i=document.getElementById("file-input");
+  i.accept="image/*"; i.click();
+}
+function pickFile(){
+  const i=document.getElementById("file-input");
+  i.accept="*/*"; i.click();
+}
+
+/* FILE */
+window.onload = ()=>{
+  const fileInput=document.getElementById("file-input");
+
+  fileInput.addEventListener("change", async function(){
+    const file=this.files[0];
+    if(!file) return;
+
+    closeUpload();
+    append("user","",file);
+
+    const formData=new FormData();
+    formData.append("file",file);
+
+    try{
+      const res=await fetch("http://127.0.0.1:8000/vision",{
+        method:"POST",
+        body:formData
+      });
+
+      const data=await res.json();
+      append("ai",data.reply);
+
+    }catch{
+      append("ai","❌ gagal baca gambar");
+    }
+  });
+};
+
+}catch(e){
+console.error("ERROR:",e);
+}
+
+</script>
+
+</body>
+</html>
