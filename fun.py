@@ -23,14 +23,17 @@ Aturan:
 """
 
 # =========================
-# GET MODEL
+# GET MODEL (UPDATED)
 # =========================
 def get_model():
-    return "gemini-1.5-flash"
+    return os.getenv("MODEL", "gemini-1.5-flash-latest")
+    # alternatif:
+    # gemini-1.5-pro-latest
+    # gemini-2.0-flash
 
 
 # =========================
-# GET API KEY (FIX)
+# GET API KEY
 # =========================
 def get_api_key():
     return os.getenv("GEMINI_API_KEY")
@@ -45,11 +48,14 @@ def home():
 
 
 # =========================
-# DEBUG (CEK API KEY)
+# DEBUG
 # =========================
 @app.route("/debug")
 def debug():
-    return {"api_key": str(get_api_key())}
+    return {
+        "api_key": str(get_api_key()),
+        "model": get_model()
+    }
 
 
 # =========================
@@ -58,7 +64,7 @@ def debug():
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        API_KEY = get_api_key()  # ambil fresh dari Railway
+        API_KEY = get_api_key()
 
         data = request.get_json()
         user = data.get("message", "")
@@ -88,9 +94,7 @@ def chat():
         res = requests.post(url, json=payload, headers=headers)
         result = res.json()
 
-        # =========================
         # ERROR HANDLE
-        # =========================
         if "error" in result:
             return jsonify({"reply": result["error"]["message"]})
 
@@ -111,7 +115,7 @@ def chat():
 @app.route("/vision", methods=["POST"])
 def vision():
     try:
-        API_KEY = get_api_key()  # ambil fresh
+        API_KEY = get_api_key()
 
         file = request.files.get("file")
 
@@ -164,8 +168,8 @@ def vision():
 
 
 # =========================
-# RUN (LOCAL ONLY)
+# RUN
 # =========================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
