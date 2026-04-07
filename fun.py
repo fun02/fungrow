@@ -8,13 +8,12 @@ app = Flask(__name__)
 CORS(app)
 
 # =========================
-# ENV
+# API KEY (AMAN)
 # =========================
 API_KEY = os.getenv("GEMINI_API_KEY")
 
 if not API_KEY:
-    raise ValueError("GEMINI_API_KEY belum diset di environment variable")
-
+    print("WARNING: GEMINI_API_KEY belum diset")
 
 # =========================
 # SYSTEM PROMPT
@@ -31,16 +30,15 @@ Aturan:
 - Jangan terlalu panjang, tapi tetap jelas
 """
 
-
 # =========================
-# MODEL
+# GET MODEL
 # =========================
 def get_model():
     return "gemini-1.5-flash"
 
 
 # =========================
-# HEALTH CHECK
+# HOME
 # =========================
 @app.route("/")
 def home():
@@ -59,15 +57,16 @@ def chat():
         if not user:
             return jsonify({"reply": "Pesan kosong"})
 
+        if not API_KEY:
+            return jsonify({"reply": "API KEY belum diset di Railway"})
+
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{get_model()}:generateContent?key={API_KEY}"
 
         payload = {
             "contents": [
                 {
                     "parts": [
-                        {
-                            "text": SYSTEM_PROMPT + "\n\nUser: " + user
-                        }
+                        {"text": SYSTEM_PROMPT + "\n\nUser: " + user}
                     ]
                 }
             ]
@@ -76,13 +75,14 @@ def chat():
         res = requests.post(url, json=payload)
         result = res.json()
 
+        # Debug response kalau error
         if "error" in result:
             return jsonify({"reply": result["error"]["message"]})
 
-        try:
-            reply = result["candidates"][0]["content"]["parts"][0]["text"]
-        except:
-            return jsonify({"reply": "AI tidak merespon, coba lagi."})
+        if "candidates" not in result:
+            return jsonify({"reply": "Error: respon AI tidak valid"})
+
+        reply = result["candidates"][0]["content"]["parts"][0]["text"]
 
         return jsonify({"reply": reply})
 
@@ -101,6 +101,9 @@ def vision():
         if not file:
             return jsonify({"reply": "Tidak ada file dikirim"})
 
+        if not API_KEY:
+            return jsonify({"reply": "API KEY belum diset di Railway"})
+
         img_bytes = file.read()
         img_base64 = base64.b64encode(img_bytes).decode("utf-8")
 
@@ -110,7 +113,7 @@ def vision():
             "contents": [
                 {
                     "parts": [
-                        {"text": "Jelaskan gambar ini"},
+                        {"text": "Jelaskan gambar ini secara detail"},
                         {
                             "inline_data": {
                                 "mime_type": file.mimetype,
@@ -128,10 +131,10 @@ def vision():
         if "error" in result:
             return jsonify({"reply": result["error"]["message"]})
 
-        try:
-            reply = result["candidates"][0]["content"]["parts"][0]["text"]
-        except:
-            return jsonify({"reply": "AI tidak bisa membaca gambar."})
+        if "candidates" not in result:
+            return jsonify({"reply": "Error: respon vision tidak valid"})
+
+        reply = result["candidates"][0]["content"]["parts"][0]["text"]
 
         return jsonify({"reply": reply})
 
@@ -143,5 +146,5 @@ def vision():
 # RUN LOCAL / RAILWAY
 # =========================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
