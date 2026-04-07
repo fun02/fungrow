@@ -8,14 +8,6 @@ app = Flask(__name__)
 CORS(app)
 
 # =========================
-# API KEY (AMAN)
-# =========================
-API_KEY = os.getenv("GEMINI_API_KEY")
-
-if not API_KEY:
-    print("WARNING: GEMINI_API_KEY belum diset")
-
-# =========================
 # SYSTEM PROMPT
 # =========================
 SYSTEM_PROMPT = """
@@ -38,6 +30,13 @@ def get_model():
 
 
 # =========================
+# GET API KEY (FIX)
+# =========================
+def get_api_key():
+    return os.getenv("GEMINI_API_KEY")
+
+
+# =========================
 # HOME
 # =========================
 @app.route("/")
@@ -46,11 +45,21 @@ def home():
 
 
 # =========================
+# DEBUG (CEK API KEY)
+# =========================
+@app.route("/debug")
+def debug():
+    return {"api_key": str(get_api_key())}
+
+
+# =========================
 # CHAT AI
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
+        API_KEY = get_api_key()  # ambil fresh dari Railway
+
         data = request.get_json()
         user = data.get("message", "")
 
@@ -72,10 +81,16 @@ def chat():
             ]
         }
 
-        res = requests.post(url, json=payload)
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        res = requests.post(url, json=payload, headers=headers)
         result = res.json()
 
-        # Debug response kalau error
+        # =========================
+        # ERROR HANDLE
+        # =========================
         if "error" in result:
             return jsonify({"reply": result["error"]["message"]})
 
@@ -96,6 +111,8 @@ def chat():
 @app.route("/vision", methods=["POST"])
 def vision():
     try:
+        API_KEY = get_api_key()  # ambil fresh
+
         file = request.files.get("file")
 
         if not file:
@@ -125,7 +142,11 @@ def vision():
             ]
         }
 
-        res = requests.post(url, json=payload)
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        res = requests.post(url, json=payload, headers=headers)
         result = res.json()
 
         if "error" in result:
@@ -143,7 +164,7 @@ def vision():
 
 
 # =========================
-# RUN LOCAL / RAILWAY
+# RUN (LOCAL ONLY)
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
