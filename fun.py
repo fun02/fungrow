@@ -22,13 +22,26 @@ Aturan:
 """
 
 # =========================
-# CONFIG BARU (FIX)
+# API KEY
 # =========================
-def get_model():
-    return "gemini-1.5-flash"  # ✅ MODEL BARU
-
 def get_api_key():
     return os.getenv("GEMINI_API_KEY")
+
+
+# =========================
+# AMBIL MODEL OTOMATIS
+# =========================
+def get_available_model():
+    API_KEY = get_api_key()
+
+    url = f"https://generativelanguage.googleapis.com/v1/models?key={API_KEY}"
+    res = requests.get(url).json()
+
+    for m in res.get("models", []):
+        if "generateContent" in m.get("supportedGenerationMethods", []):
+            return m["name"]  # langsung pakai model valid
+
+    return None
 
 
 # =========================
@@ -40,18 +53,18 @@ def home():
 
 
 # =========================
-# DEBUG
+# DEBUG MODEL
 # =========================
 @app.route("/debug")
 def debug():
     return {
         "api_key": str(get_api_key()),
-        "model": get_model()
+        "model_auto": get_available_model()
     }
 
 
 # =========================
-# CHAT AI (VERSI BARU)
+# CHAT AI (AUTO MODEL)
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -61,14 +74,18 @@ def chat():
         if not API_KEY:
             return jsonify({"reply": "❌ API KEY belum diset"})
 
+        model = get_available_model()
+
+        if not model:
+            return jsonify({"reply": "❌ Tidak ada model tersedia"})
+
         data = request.get_json(force=True)
         user = data.get("message", "")
 
         if not user:
             return jsonify({"reply": "❌ Pesan kosong"})
 
-        # 🔥 ENDPOINT BARU (V1)
-        url = f"https://generativelanguage.googleapis.com/v1/models/{get_model()}:generateContent?key={API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1/{model}:generateContent?key={API_KEY}"
 
         payload = {
             "contents": [
@@ -88,7 +105,10 @@ def chat():
 
         reply = result["candidates"][0]["content"]["parts"][0]["text"]
 
-        return jsonify({"reply": reply})
+        return jsonify({
+            "model_used": model,
+            "reply": reply
+        })
 
     except Exception as e:
         return jsonify({"reply": f"❌ Error: {str(e)}"})
