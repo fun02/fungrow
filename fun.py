@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import requests
 import base64
 import os
@@ -7,15 +6,13 @@ import os
 app = Flask(__name__)
 
 # =========================
-# CORS FIX (PENTING 🔥)
+# CORS SUPER FIX 🔥 (ANTI GAGAL)
 # =========================
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-
 @app.after_request
 def after_request(response):
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-    response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
     return response
 
 
@@ -28,13 +25,13 @@ Kamu adalah AI seperti ChatGPT.
 Aturan:
 - Gunakan bahasa Indonesia natural & profesional
 - Format markdown rapi
-- Gunakan heading & bullet
+- Gunakan bullet & heading
 - Jawaban enak dibaca di HP
 """
 
 
 # =========================
-# MODEL (FIX TERBARU 🔥)
+# MODEL (FIX TERBARU)
 # =========================
 def get_model():
     return "models/gemini-2.5-flash"
@@ -64,13 +61,19 @@ def debug():
 
 
 # =========================
+# OPTIONS HANDLER (PENTING)
+# =========================
+@app.route("/chat", methods=["OPTIONS"])
+@app.route("/vision", methods=["OPTIONS"])
+def options():
+    return jsonify({"status": "ok"})
+
+
+# =========================
 # CHAT
 # =========================
-@app.route("/chat", methods=["POST", "OPTIONS"])
+@app.route("/chat", methods=["POST"])
 def chat():
-    if request.method == "OPTIONS":
-        return jsonify({"status": "ok"})
-
     try:
         API_KEY = get_api_key()
 
@@ -119,11 +122,8 @@ def chat():
 # =========================
 # VISION
 # =========================
-@app.route("/vision", methods=["POST", "OPTIONS"])
+@app.route("/vision", methods=["POST"])
 def vision():
-    if request.method == "OPTIONS":
-        return jsonify({"status": "ok"})
-
     try:
         API_KEY = get_api_key()
 
