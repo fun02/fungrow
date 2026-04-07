@@ -11,22 +11,21 @@ CORS(app)
 # SYSTEM PROMPT
 # =========================
 SYSTEM_PROMPT = """
-Kamu adalah AI seperti Gemini.
+Kamu adalah AI modern seperti Gemini.
 
 Aturan:
 - Gunakan bahasa Indonesia yang natural & profesional
-- Format jawaban dengan markdown rapi
-- Gunakan heading (##), bullet, dan spacing
-- Hindari simbol aneh seperti ###
-- Buat jawaban enak dibaca di layar HP
-- Jangan terlalu panjang, tapi tetap jelas
+- Format markdown rapi
+- Gunakan heading dan bullet
+- Jawaban enak dibaca di HP
+- Tidak terlalu panjang
 """
 
 # =========================
-# CONFIG (FIX FINAL)
+# CONFIG BARU (FIX)
 # =========================
 def get_model():
-    return "models/gemini-pro"  # ✅ PALING STABIL
+    return "gemini-1.5-flash"  # ✅ MODEL BARU
 
 def get_api_key():
     return os.getenv("GEMINI_API_KEY")
@@ -52,21 +51,7 @@ def debug():
 
 
 # =========================
-# MODELS CHECK
-# =========================
-@app.route("/models")
-def models():
-    API_KEY = get_api_key()
-
-    if not API_KEY:
-        return {"error": "API KEY belum diset"}
-
-    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={API_KEY}"
-    return requests.get(url).json()
-
-
-# =========================
-# CHAT AI
+# CHAT AI (VERSI BARU)
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -74,94 +59,28 @@ def chat():
         API_KEY = get_api_key()
 
         if not API_KEY:
-            return jsonify({"reply": "❌ API KEY belum diset di Railway"})
+            return jsonify({"reply": "❌ API KEY belum diset"})
 
         data = request.get_json(force=True)
-
         user = data.get("message", "")
 
         if not user:
             return jsonify({"reply": "❌ Pesan kosong"})
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/{get_model()}:generateContent?key={API_KEY}"
+        # 🔥 ENDPOINT BARU (V1)
+        url = f"https://generativelanguage.googleapis.com/v1/models/{get_model()}:generateContent?key={API_KEY}"
 
         payload = {
             "contents": [
                 {
                     "parts": [
-                        {
-                            "text": SYSTEM_PROMPT + "\n\nUser: " + user
-                        }
+                        {"text": SYSTEM_PROMPT + "\n\nUser: " + user}
                     ]
                 }
             ]
         }
 
-        headers = {
-            "Content-Type": "application/json"
-        }
-
-        res = requests.post(url, json=payload, headers=headers)
-        result = res.json()
-
-        # ERROR HANDLE
-        if "error" in result:
-            return jsonify({"reply": "❌ " + result["error"]["message"]})
-
-        candidates = result.get("candidates")
-
-        if not candidates:
-            return jsonify({"reply": "❌ Respon kosong dari AI"})
-
-        reply = candidates[0]["content"]["parts"][0].get("text", "❌ Tidak ada teks")
-
-        return jsonify({"reply": reply})
-
-    except Exception as e:
-        return jsonify({"reply": f"❌ Error server: {str(e)}"})
-
-
-# =========================
-# VISION AI
-# =========================
-@app.route("/vision", methods=["POST"])
-def vision():
-    try:
-        API_KEY = get_api_key()
-
-        if not API_KEY:
-            return jsonify({"reply": "❌ API KEY belum diset"})
-
-        file = request.files.get("file")
-
-        if not file:
-            return jsonify({"reply": "❌ Tidak ada file dikirim"})
-
-        img_base64 = base64.b64encode(file.read()).decode("utf-8")
-
-        url = f"https://generativelanguage.googleapis.com/v1beta/{get_model()}:generateContent?key={API_KEY}"
-
-        payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": "Jelaskan gambar ini secara detail"},
-                        {
-                            "inline_data": {
-                                "mime_type": file.mimetype,
-                                "data": img_base64
-                            }
-                        }
-                    ]
-                }
-            ]
-        }
-
-        headers = {
-            "Content-Type": "application/json"
-        }
-
-        res = requests.post(url, json=payload, headers=headers)
+        res = requests.post(url, json=payload)
         result = res.json()
 
         if "error" in result:
@@ -172,7 +91,7 @@ def vision():
         return jsonify({"reply": reply})
 
     except Exception as e:
-        return jsonify({"reply": f"❌ Error vision: {str(e)}"})
+        return jsonify({"reply": f"❌ Error: {str(e)}"})
 
 
 # =========================
