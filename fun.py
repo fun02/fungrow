@@ -20,7 +20,7 @@ def after_request(response):
 # SYSTEM PROMPT
 # =========================
 SYSTEM_PROMPT = """
-Kamu adalah AI seperti ChatGPT.
+Kamu adalah FunGrow AI, asisten pintar.
 
 Aturan:
 - Gunakan bahasa Indonesia natural & profesional
