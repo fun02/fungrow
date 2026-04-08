@@ -18,7 +18,10 @@ body{
   color:white;
   font-family:sans-serif;
 }
-.glow { box-shadow:0 0 25px rgba(139,92,246,0.4); }
+/* Efek glow ungu di sekitar logo utama */
+.logo-glow {
+  filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.6));
+}
 .glass{ backdrop-filter:blur(12px); background:rgba(17,24,39,0.6);}
 .card{ background:#111827;border-radius:16px;padding:16px;border:1px solid #1f2937;}
 .msg-row{margin-bottom:14px;display:flex;}
@@ -33,9 +36,12 @@ img{border-radius:12px;}
 <body>
 
 <div id="sidebar" class="fixed inset-y-0 left-0 w-64 glass transform -translate-x-full transition-transform duration-300 z-50 flex flex-col border-r border-gray-800">
-  <div class="p-4 border-b border-gray-800 flex justify-between items-center">
-    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="zap" class="text-purple-500 w-5 h-5"></i> Menu</h2>
-    <i data-lucide="x" class="cursor-pointer text-gray-400 hover:text-white" onclick="toggleSidebar()"></i>
+  <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
+    <div class="flex items-center gap-2.5">
+      <img src="logo.png" alt="Logo" class="w-7 h-7 object-contain">
+      <h2 class="font-bold text-lg text-white">FunGrow AI</h2>
+    </div>
+    <i data-lucide="x" class="cursor-pointer text-gray-400 hover:text-white transition" onclick="toggleSidebar()"></i>
   </div>
   
   <div class="p-4 flex-1 flex flex-col">
@@ -48,10 +54,6 @@ img{border-radius:12px;}
       <div class="p-3 bg-gray-800/50 rounded-lg text-sm text-gray-300 cursor-pointer hover:bg-gray-800">
         <div class="truncate">Ide bisnis 2026...</div>
         <div class="text-xs text-gray-500 mt-1">Hari ini</div>
-      </div>
-      <div class="p-3 bg-gray-800/50 rounded-lg text-sm text-gray-300 cursor-pointer hover:bg-gray-800">
-        <div class="truncate">Belajar coding python...</div>
-        <div class="text-xs text-gray-500 mt-1">Kemarin</div>
       </div>
     </div>
   </div>
@@ -67,10 +69,8 @@ img{border-radius:12px;}
 </header>
 
 <main id="main" class="p-4 overflow-y-auto h-[75vh]">
-  <div id="welcome" class="text-center mt-10 transition-all">
-    <div class="mx-auto w-20 h-20 rounded-2xl bg-purple-600 glow flex items-center justify-center shadow-lg">
-      <i data-lucide="bot" class="text-white w-10 h-10"></i>
-    </div>
+  <div id="welcome" class="text-center mt-10 transition-all duration-300">
+    <img src="logo.png" alt="FunGrow AI Logo" class="mx-auto w-32 h-32 object-contain logo-glow mb-6">
     <h1 class="text-2xl font-bold mt-6">FunGrow AI</h1>
     <p class="text-gray-400 mt-2">Asisten AI pintar Anda</p>
 
@@ -86,7 +86,7 @@ img{border-radius:12px;}
 </main>
 
 <footer class="p-3 glass border-t border-gray-800/50">
-  <div class="input-box">
+  <div class="input-box shadow-inner">
     <button onclick="openUpload()" class="p-2 text-gray-400 hover:text-white transition">
       <i data-lucide="paperclip" class="w-5 h-5"></i>
     </button>
@@ -146,36 +146,26 @@ function logout() {
 }
 
 // ==========================================
-// SIDEBAR LOGIC (Menu Garis 3)
+// SIDEBAR LOGIC
 // ==========================================
 function toggleSidebar() {
   const sidebar = document.getElementById("sidebar");
   const overlay = document.getElementById("sidebar-overlay");
   
   if (sidebar.classList.contains("-translate-x-full")) {
-    // Buka Sidebar
     sidebar.classList.remove("-translate-x-full");
     overlay.classList.remove("hidden");
   } else {
-    // Tutup Sidebar
     sidebar.classList.add("-translate-x-full");
     overlay.classList.add("hidden");
   }
 }
 
-// Fitur Percakapan Baru
 function newChat() {
-  // 1. Bersihkan HTML layar obrolan
   chat.innerHTML = "";
   chat.classList.add("hidden");
-  
-  // 2. Tampilkan kembali menu selamat datang
   welcome.style.display = "block";
-  
-  // 3. Hapus memori (history array) agar AI lupa obrolan sebelumnya
   chatHistory = [];
-  
-  // 4. Tutup sidebar otomatis
   toggleSidebar();
 }
 
@@ -257,7 +247,7 @@ function append(role,text,file=null){
   row.className = "msg-row " + (role==="user"?"user-row":"");
 
   const bubble = document.createElement("div");
-  bubble.className = role==="user"?"bubble-user shadow-md":"bubble-ai shadow-md border border-gray-800";
+  bubble.className = role==="user"?"bubble-user shadow":"bubble-ai shadow border border-gray-800";
 
   if(file && file.type.startsWith("image/")){
     const img = document.createElement("img");
