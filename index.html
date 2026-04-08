@@ -26,63 +26,97 @@ body{
 .bubble-user{background:#1f2937;padding:10px 14px;border-radius:18px;max-width:80%;}
 .bubble-ai{background:#111827;padding:10px;border-radius:12px;max-width:85%;}
 img{border-radius:12px;}
-.input-box{border-radius:30px;padding:8px 12px;display:flex;align-items:center;border:1px solid #1f2937;}
+.input-box{background:#1f2937; border-radius:30px;padding:8px 12px;display:flex;align-items:center;border:1px solid #374151;}
 </style>
 </head>
 
 <body>
 
-<header class="flex justify-between p-4 items-center">
-  <i data-lucide="menu"></i>
+<div id="sidebar" class="fixed inset-y-0 left-0 w-64 glass transform -translate-x-full transition-transform duration-300 z-50 flex flex-col border-r border-gray-800">
+  <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="zap" class="text-purple-500 w-5 h-5"></i> Menu</h2>
+    <i data-lucide="x" class="cursor-pointer text-gray-400 hover:text-white" onclick="toggleSidebar()"></i>
+  </div>
+  
+  <div class="p-4 flex-1 flex flex-col">
+    <button onclick="newChat()" class="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded-xl font-bold flex gap-2 items-center mb-6 transition-colors shadow-lg">
+      <i data-lucide="plus-circle" class="w-5 h-5"></i> Percakapan Baru
+    </button>
+    
+    <div class="text-sm text-gray-400 mb-3 font-semibold tracking-wider">HISTORY CHAT</div>
+    <div id="history-list" class="space-y-2 overflow-y-auto flex-1">
+      <div class="p-3 bg-gray-800/50 rounded-lg text-sm text-gray-300 cursor-pointer hover:bg-gray-800">
+        <div class="truncate">Ide bisnis 2026...</div>
+        <div class="text-xs text-gray-500 mt-1">Hari ini</div>
+      </div>
+      <div class="p-3 bg-gray-800/50 rounded-lg text-sm text-gray-300 cursor-pointer hover:bg-gray-800">
+        <div class="truncate">Belajar coding python...</div>
+        <div class="text-xs text-gray-500 mt-1">Kemarin</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/60 hidden z-40 transition-opacity" onclick="toggleSidebar()"></div>
+
+<header class="flex justify-between p-4 items-center border-b border-gray-800/50">
+  <i data-lucide="menu" class="cursor-pointer text-gray-300 hover:text-white" onclick="toggleSidebar()"></i>
   <div class="flex gap-4 items-center">
-    <i data-lucide="mic" onclick="startMic()" class="cursor-pointer hover:text-purple-400"></i>
     <i data-lucide="log-out" onclick="logout()" class="cursor-pointer text-red-500 hover:text-red-400"></i>
   </div>
 </header>
 
 <main id="main" class="p-4 overflow-y-auto h-[75vh]">
+  <div id="welcome" class="text-center mt-10 transition-all">
+    <div class="mx-auto w-20 h-20 rounded-2xl bg-purple-600 glow flex items-center justify-center shadow-lg">
+      <i data-lucide="bot" class="text-white w-10 h-10"></i>
+    </div>
+    <h1 class="text-2xl font-bold mt-6">FunGrow AI</h1>
+    <p class="text-gray-400 mt-2">Asisten AI pintar Anda</p>
 
-<div id="welcome" class="text-center mt-10">
-  <div class="mx-auto w-20 h-20 rounded-2xl bg-purple-600 glow flex items-center justify-center">😛</div>
-  <h1 class="text-2xl font-bold mt-6">FunGrow AI</h1>
-  <p class="text-gray-400 mt-2">Asisten AI pintar</p>
-
-  <div class="grid grid-cols-2 gap-3 mt-6">
-    <button onclick="quick('Buat website modern')" class="card">🌐 Website</button>
-    <button onclick="quick('Jelaskan AI')" class="card">🧠 AI</button>
-    <button onclick="quick('Ide bisnis startup')" class="card">🚀 Startup</button>
-    <button onclick="quick('Belajar coding python')" class="card">🐍 Python</button>
+    <div class="grid grid-cols-2 gap-3 mt-8">
+      <button onclick="quick('Buat website modern')" class="card hover:bg-gray-800 transition">🌐 Website</button>
+      <button onclick="quick('Jelaskan AI')" class="card hover:bg-gray-800 transition">🧠 AI</button>
+      <button onclick="quick('Ide bisnis startup')" class="card hover:bg-gray-800 transition">🚀 Startup</button>
+      <button onclick="quick('Belajar coding python')" class="card hover:bg-gray-800 transition">🐍 Python</button>
+    </div>
   </div>
-</div>
 
-<div id="chat" class="hidden mt-4"></div>
-
+  <div id="chat" class="hidden mt-4"></div>
 </main>
 
-<footer class="p-3 glass">
-<div class="input-box">
-  <button onclick="openUpload()"><i data-lucide="plus"></i></button>
-  <input id="input"
-    class="flex-1 bg-transparent outline-none px-2"
-    placeholder="Tanya apa saja..."
-    onkeydown="if(event.key==='Enter') send()">
-  <button id="sendBtn" class="bg-purple-600 p-2 rounded-full">
-    <i data-lucide="send"></i>
-  </button>
-</div>
+<footer class="p-3 glass border-t border-gray-800/50">
+  <div class="input-box">
+    <button onclick="openUpload()" class="p-2 text-gray-400 hover:text-white transition">
+      <i data-lucide="paperclip" class="w-5 h-5"></i>
+    </button>
+    
+    <input id="input"
+      class="flex-1 bg-transparent outline-none px-2 text-sm md:text-base placeholder-gray-400"
+      placeholder="Tanya apa saja ke FunGrow..."
+      onkeydown="if(event.key==='Enter') send()">
+    
+    <button onclick="startMic()" class="p-2 text-gray-400 hover:text-white transition mr-1">
+      <i data-lucide="mic" class="w-5 h-5"></i>
+    </button>
+    
+    <button id="sendBtn" class="bg-purple-600 hover:bg-purple-700 p-2.5 rounded-full transition shadow-lg">
+      <i data-lucide="send" class="w-4 h-4 text-white"></i>
+    </button>
+  </div>
 </footer>
 
 <input type="file" id="file-input" class="hidden">
 
-<div id="upload-modal" class="hidden fixed inset-0 bg-black/60 flex items-end justify-center">
-<div class="bg-[#111827] w-full p-6 rounded-t-2xl">
-<div class="grid grid-cols-3 gap-4 text-center">
-<button onclick="openCamera()">📷 Kamera</button>
-<button onclick="pickImage()">🖼️ Foto</button>
-<button onclick="pickFile()">📄 File</button>
-</div>
-<button onclick="closeUpload()" class="mt-5 w-full text-gray-400">Tutup</button>
-</div>
+<div id="upload-modal" class="hidden fixed inset-0 bg-black/80 flex items-end justify-center z-50">
+  <div class="bg-[#111827] w-full p-6 rounded-t-2xl border-t border-gray-700">
+    <div class="grid grid-cols-3 gap-4 text-center">
+      <button onclick="openCamera()" class="p-4 bg-gray-800 rounded-xl hover:bg-gray-700 transition">📷<br><span class="text-xs mt-2 block text-gray-300">Kamera</span></button>
+      <button onclick="pickImage()" class="p-4 bg-gray-800 rounded-xl hover:bg-gray-700 transition">🖼️<br><span class="text-xs mt-2 block text-gray-300">Galeri</span></button>
+      <button onclick="pickFile()" class="p-4 bg-gray-800 rounded-xl hover:bg-gray-700 transition">📄<br><span class="text-xs mt-2 block text-gray-300">File</span></button>
+    </div>
+    <button onclick="closeUpload()" class="mt-6 w-full py-3 bg-gray-800 rounded-xl text-gray-300 hover:text-white transition font-semibold">Tutup</button>
+  </div>
 </div>
 
 <script>
@@ -103,28 +137,58 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
-// Jika belum login, tendang ke login.html
 auth.onAuthStateChanged(user => {
-  if(!user) {
-    window.location.href = "login.html";
-  }
+  if(!user) window.location.href = "login.html";
 });
 
 function logout() {
-  auth.signOut().then(() => {
-    window.location.href = "login.html";
-  });
+  auth.signOut().then(() => { window.location.href = "login.html"; });
 }
 
 // ==========================================
-// LOGIKA CHAT AI (DENGAN MEMORI)
+// SIDEBAR LOGIC (Menu Garis 3)
+// ==========================================
+function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebar-overlay");
+  
+  if (sidebar.classList.contains("-translate-x-full")) {
+    // Buka Sidebar
+    sidebar.classList.remove("-translate-x-full");
+    overlay.classList.remove("hidden");
+  } else {
+    // Tutup Sidebar
+    sidebar.classList.add("-translate-x-full");
+    overlay.classList.add("hidden");
+  }
+}
+
+// Fitur Percakapan Baru
+function newChat() {
+  // 1. Bersihkan HTML layar obrolan
+  chat.innerHTML = "";
+  chat.classList.add("hidden");
+  
+  // 2. Tampilkan kembali menu selamat datang
+  welcome.style.display = "block";
+  
+  // 3. Hapus memori (history array) agar AI lupa obrolan sebelumnya
+  chatHistory = [];
+  
+  // 4. Tutup sidebar otomatis
+  toggleSidebar();
+}
+
+
+// ==========================================
+// LOGIKA CHAT AI
 // ==========================================
 const API_URL = "https://web-production-75739.up.railway.app";
 const chat = document.getElementById("chat");
 const welcome = document.getElementById("welcome");
 const input = document.getElementById("input");
 
-let chatHistory = []; // Memori obrolan
+let chatHistory = []; 
 
 document.getElementById("sendBtn").addEventListener("click", send);
 
@@ -150,9 +214,7 @@ async function send(){
   append("user", val);
   input.value="";
   
-  // Simpan ke memori
   chatHistory.push({role: "user", text: val});
-
   append("ai","⏳ Mengetik...");
 
   try{
@@ -161,7 +223,7 @@ async function send(){
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
         message: val,
-        history: chatHistory // Kirim memori ke backend Python
+        history: chatHistory 
       })
     });
 
@@ -174,8 +236,6 @@ async function send(){
     }
 
     append("ai", data.reply);
-    
-    // Simpan jawaban AI ke memori
     chatHistory.push({role: "ai", text: data.reply});
 
   }catch(e){
@@ -197,7 +257,7 @@ function append(role,text,file=null){
   row.className = "msg-row " + (role==="user"?"user-row":"");
 
   const bubble = document.createElement("div");
-  bubble.className = role==="user"?"bubble-user":"bubble-ai";
+  bubble.className = role==="user"?"bubble-user shadow-md":"bubble-ai shadow-md border border-gray-800";
 
   if(file && file.type.startsWith("image/")){
     const img = document.createElement("img");
@@ -213,14 +273,8 @@ function append(role,text,file=null){
   scroll();
 }
 
-function scroll(){
-  chat.scrollTo({top:chat.scrollHeight,behavior:"smooth"});
-}
-
-function quick(t){
-  input.value = t;
-  send();
-}
+function scroll(){ chat.scrollTo({top:chat.scrollHeight,behavior:"smooth"}); }
+function quick(t){ input.value = t; send(); }
 
 function startMic(){
   const rec = new webkitSpeechRecognition();
@@ -251,10 +305,7 @@ window.onload = ()=>{
     formData.append("file",file);
 
     try{
-      const res=await fetch(API_URL + "/vision",{
-        method:"POST",
-        body:formData
-      });
+      const res=await fetch(API_URL + "/vision",{ method:"POST", body:formData });
       const data=await res.json();
       append("ai",data.reply);
     }catch{
