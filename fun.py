@@ -53,14 +53,6 @@ def home():
 
 
 # =========================
-# DEBUG
-# =========================
-@app.route("/debug")
-def debug():
-    return {"api_key": str(get_api_key())}
-
-
-# =========================
 # OPTIONS HANDLER (PENTING)
 # =========================
 @app.route("/chat", methods=["OPTIONS"])
