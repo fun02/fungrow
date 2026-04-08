@@ -9,6 +9,9 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
 <style>
 body{
   background:#0b0f1a;
@@ -31,9 +34,9 @@ img{border-radius:12px;}
 
 <header class="flex justify-between p-4 items-center">
   <i data-lucide="menu"></i>
-  <div class="flex gap-3">
-    <i data-lucide="mic" onclick="startMic()"></i>
-    <i data-lucide="sparkles"></i>
+  <div class="flex gap-4 items-center">
+    <i data-lucide="mic" onclick="startMic()" class="cursor-pointer hover:text-purple-400"></i>
+    <i data-lucide="log-out" onclick="logout()" class="cursor-pointer text-red-500 hover:text-red-400"></i>
   </div>
 </header>
 
@@ -58,18 +61,14 @@ img{border-radius:12px;}
 
 <footer class="p-3 glass">
 <div class="input-box">
-
   <button onclick="openUpload()"><i data-lucide="plus"></i></button>
-
   <input id="input"
     class="flex-1 bg-transparent outline-none px-2"
     placeholder="Tanya apa saja..."
     onkeydown="if(event.key==='Enter') send()">
-
   <button id="sendBtn" class="bg-purple-600 p-2 rounded-full">
     <i data-lucide="send"></i>
   </button>
-
 </div>
 </footer>
 
@@ -87,14 +86,45 @@ img{border-radius:12px;}
 </div>
 
 <script>
-
 lucide.createIcons();
 
-const API_URL = "https://web-production-75739.up.railway.app"; // 🔥 FIX
+// ==========================================
+// FIREBASE AUTHENTICATION CHECK
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyAOinJglg5eujMZU0NeK7OaXzU3E5-wTXo",
+  authDomain: "fungrow-ai-d6c8a.firebaseapp.com",
+  projectId: "fungrow-ai-d6c8a",
+  storageBucket: "fungrow-ai-d6c8a.firebasestorage.app",
+  messagingSenderId: "207957089533",
+  appId: "1:207957089533:web:c923637ecd844bcbd93294"
+};
 
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// Jika belum login, tendang ke login.html
+auth.onAuthStateChanged(user => {
+  if(!user) {
+    window.location.href = "login.html";
+  }
+});
+
+function logout() {
+  auth.signOut().then(() => {
+    window.location.href = "login.html";
+  });
+}
+
+// ==========================================
+// LOGIKA CHAT AI (DENGAN MEMORI)
+// ==========================================
+const API_URL = "https://web-production-75739.up.railway.app";
 const chat = document.getElementById("chat");
 const welcome = document.getElementById("welcome");
 const input = document.getElementById("input");
+
+let chatHistory = []; // Memori obrolan
 
 document.getElementById("sendBtn").addEventListener("click", send);
 
@@ -119,20 +149,23 @@ async function send(){
 
   append("user", val);
   input.value="";
+  
+  // Simpan ke memori
+  chatHistory.push({role: "user", text: val});
 
   append("ai","⏳ Mengetik...");
 
   try{
     const res = await fetch(API_URL + "/chat",{
       method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({message:val})
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        message: val,
+        history: chatHistory // Kirim memori ke backend Python
+      })
     });
 
     const data = await res.json();
-
     removeLoading();
 
     if(!data.reply){
@@ -141,6 +174,9 @@ async function send(){
     }
 
     append("ai", data.reply);
+    
+    // Simpan jawaban AI ke memori
+    chatHistory.push({role: "ai", text: data.reply});
 
   }catch(e){
     removeLoading();
@@ -157,7 +193,6 @@ function removeLoading(){
 }
 
 function append(role,text,file=null){
-
   const row = document.createElement("div");
   row.className = "msg-row " + (role==="user"?"user-row":"");
 
@@ -175,7 +210,6 @@ function append(role,text,file=null){
 
   row.appendChild(bubble);
   chat.appendChild(row);
-
   scroll();
 }
 
@@ -198,28 +232,14 @@ function startMic(){
   rec.start();
 }
 
-function openUpload(){
-  document.getElementById("upload-modal").classList.remove("hidden");
-}
-function closeUpload(){
-  document.getElementById("upload-modal").classList.add("hidden");
-}
-function openCamera(){
-  const i=document.getElementById("file-input");
-  i.accept="image/*"; i.capture="environment"; i.click();
-}
-function pickImage(){
-  const i=document.getElementById("file-input");
-  i.accept="image/*"; i.click();
-}
-function pickFile(){
-  const i=document.getElementById("file-input");
-  i.accept="*/*"; i.click();
-}
+function openUpload(){ document.getElementById("upload-modal").classList.remove("hidden"); }
+function closeUpload(){ document.getElementById("upload-modal").classList.add("hidden"); }
+function openCamera(){ document.getElementById("file-input").accept="image/*"; document.getElementById("file-input").capture="environment"; document.getElementById("file-input").click(); }
+function pickImage(){ document.getElementById("file-input").accept="image/*"; document.getElementById("file-input").click(); }
+function pickFile(){ document.getElementById("file-input").accept="*/*"; document.getElementById("file-input").click(); }
 
 window.onload = ()=>{
   const fileInput=document.getElementById("file-input");
-
   fileInput.addEventListener("change", async function(){
     const file=this.files[0];
     if(!file) return;
@@ -235,16 +255,13 @@ window.onload = ()=>{
         method:"POST",
         body:formData
       });
-
       const data=await res.json();
       append("ai",data.reply);
-
     }catch{
       append("ai","❌ gagal baca gambar");
     }
   });
 };
-
 </script>
 
 </body>
