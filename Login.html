@@ -19,11 +19,11 @@
   }
   .glass {
     backdrop-filter: blur(16px);
-    background: rgba(17, 24, 39, 0.7);
+    background: rgba(17, 24, 39, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
   .input-box {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.5);
     border: 1px solid #374151;
     color: white;
   }
@@ -36,46 +36,28 @@
       <div class="mx-auto w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(147,51,234,0.5)]">
         <i data-lucide="zap" class="text-white"></i>
       </div>
-      <h2 class="text-2xl font-bold">Masuk ke FunGrow AI</h2>
-      <p class="text-gray-400 text-sm mt-1">Pilih metode login favoritmu</p>
+      <h2 class="text-2xl font-bold">FunGrow AI</h2>
+      <p class="text-gray-300 text-sm mt-1">Silakan masuk untuk melanjutkan</p>
     </div>
 
-    <div class="flex border-b border-gray-600 mb-6">
-      <button onclick="switchTab('email-tab')" class="flex-1 pb-2 border-b-2 border-purple-500 font-semibold" id="btn-email-tab">Email</button>
-      <button onclick="switchTab('phone-tab')" class="flex-1 pb-2 text-gray-400" id="btn-phone-tab">Telepon</button>
-    </div>
-
-    <div id="email-tab" class="space-y-4">
+    <div class="space-y-4">
       <input type="email" id="email" placeholder="Email kamu..." class="w-full input-box rounded-lg p-3 outline-none focus:border-purple-500">
       <input type="password" id="password" placeholder="Password..." class="w-full input-box rounded-lg p-3 outline-none focus:border-purple-500">
-      <button onclick="loginEmail()" class="w-full bg-purple-600 hover:bg-purple-700 font-bold py-3 rounded-lg transition-colors">
-        Masuk / Daftar
-      </button>
-    </div>
-
-    <div id="phone-tab" class="space-y-4 hidden">
-      <div id="recaptcha-container" class="flex justify-center mb-2"></div>
       
-      <div class="flex gap-2" id="phone-input-group">
-        <span class="input-box p-3 rounded-lg">+62</span>
-        <input type="number" id="phone" placeholder="81234567890" class="w-full input-box rounded-lg p-3 outline-none focus:border-purple-500">
-      </div>
-      <button onclick="sendOTP()" id="btn-send-otp" class="w-full bg-blue-600 hover:bg-blue-700 font-bold py-3 rounded-lg transition-colors">
-        Kirim Kode OTP
-      </button>
-
-      <div id="otp-group" class="hidden space-y-4 mt-4">
-        <input type="number" id="otp" placeholder="Masukkan 6 digit OTP..." class="w-full input-box rounded-lg p-3 outline-none text-center tracking-widest text-xl">
-        <button onclick="verifyOTP()" class="w-full bg-green-600 hover:bg-green-700 font-bold py-3 rounded-lg transition-colors">
-          Verifikasi & Masuk
+      <div class="flex gap-2 pt-2">
+        <button onclick="loginEmail()" class="flex-1 bg-purple-600 hover:bg-purple-700 font-bold py-3 rounded-lg transition-colors">
+          Masuk
+        </button>
+        <button onclick="registerEmail()" class="flex-1 bg-gray-700 hover:bg-gray-600 font-bold py-3 rounded-lg transition-colors border border-gray-500">
+          Daftar Baru
         </button>
       </div>
     </div>
 
     <div class="my-6 flex items-center">
-      <div class="flex-1 border-t border-gray-600"></div>
-      <span class="px-3 text-gray-400 text-sm">ATAU</span>
-      <div class="flex-1 border-t border-gray-600"></div>
+      <div class="flex-1 border-t border-gray-500"></div>
+      <span class="px-3 text-gray-300 text-sm">ATAU</span>
+      <div class="flex-1 border-t border-gray-500"></div>
     </div>
 
     <button onclick="loginGoogle()" class="w-full bg-white text-gray-900 hover:bg-gray-200 font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
@@ -87,7 +69,6 @@
 <script>
   lucide.createIcons();
 
-  // CONFIG FIREBASE KAMU
   const firebaseConfig = {
     apiKey: "AIzaSyAOinJglg5eujMZU0NeK7OaXzU3E5-wTXo",
     authDomain: "fungrow-ai-d6c8a.firebaseapp.com",
@@ -100,29 +81,35 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
 
-  // Cek jika sudah login, langsung arahkan ke aplikasi utama
+  // Redirect jika sudah login
   auth.onAuthStateChanged(user => {
     if(user) {
       window.location.href = "index.html"; 
     }
   });
 
-  function switchTab(tabId) {
-    document.getElementById('email-tab').classList.add('hidden');
-    document.getElementById('phone-tab').classList.add('hidden');
-    document.getElementById(tabId).classList.remove('hidden');
-    
-    document.getElementById('btn-email-tab').className = "flex-1 pb-2 text-gray-400";
-    document.getElementById('btn-phone-tab').className = "flex-1 pb-2 text-gray-400";
-    document.getElementById('btn-' + tabId).className = "flex-1 pb-2 border-b-2 border-purple-500 font-semibold text-white";
-  }
-
+  // Login Google
   function loginGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-      .catch((error) => alert("Gagal: " + error.message));
+    auth.signInWithPopup(provider).catch((error) => {
+      alert("Error Google: Pastikan domain fungrow-ai.netlify.app sudah ditambahkan di Firebase Authorized Domains. Pesan asli: " + error.message);
+    });
   }
 
+  // Daftar Akun Baru (Email)
+  function registerEmail() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    if(!email || !password) return alert("Isi email dan password!");
+    if(password.length < 6) return alert("Password minimal 6 karakter!");
+
+    auth.createUserWithEmailAndPassword(email, password)
+      .then(() => alert("Pendaftaran Berhasil! Mengalihkan..."))
+      .catch((error) => alert("Gagal Daftar: " + error.message));
+  }
+
+  // Masuk / Login (Email)
   function loginEmail() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -131,44 +118,8 @@
 
     auth.signInWithEmailAndPassword(email, password)
       .catch((error) => {
-        if(error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-          auth.createUserWithEmailAndPassword(email, password)
-            .catch(err => alert("Gagal buat akun: " + err.message));
-        } else {
-          alert("Error: " + error.message);
-        }
+        alert("Gagal Masuk: Email atau Password salah. (Atau gunakan tombol Daftar Baru jika belum punya akun)");
       });
-  }
-
-  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-    'size': 'normal'
-  });
-
-  let confirmationResult;
-
-  function sendOTP() {
-    const phoneNumber = "+62" + document.getElementById("phone").value;
-    if(phoneNumber.length < 10) return alert("Nomor HP tidak valid");
-
-    const appVerifier = window.recaptchaVerifier;
-
-    auth.signInWithPhoneNumber(phoneNumber, appVerifier)
-      .then((result) => {
-        confirmationResult = result;
-        document.getElementById("phone-input-group").classList.add("hidden");
-        document.getElementById("btn-send-otp").classList.add("hidden");
-        document.getElementById("recaptcha-container").classList.add("hidden");
-        document.getElementById("otp-group").classList.remove("hidden");
-        alert("Kode OTP telah dikirim via SMS!");
-      }).catch((error) => alert("Gagal kirim SMS: " + error.message));
-  }
-
-  function verifyOTP() {
-    const code = document.getElementById("otp").value;
-    if(code.length !== 6) return alert("OTP harus 6 digit");
-
-    confirmationResult.confirm(code)
-      .catch((error) => alert("Kode OTP salah: " + error.message));
   }
 </script>
 </body>
